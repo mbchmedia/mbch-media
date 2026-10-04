@@ -8,3 +8,5 @@
 
 .footer-legal{display:flex;gap:24px;flex-wrap:wrap;position:relative;z-index:1}.footer-legal a{display:inline-flex;align-items:center;min-height:44px;padding:8px 0;font-size:14px;text-decoration:underline;text-underline-offset:4px;cursor:pointer;pointer-events:auto}.footer-bottom{align-items:center}.legal-page ul{color:var(--muted);padding-left:24px}.legal-details{display:grid;grid-template-columns:190px 1fr;gap:18px 25px;margin-top:36px;border-block:1px solid var(--border);padding:30px 0}.legal-details dt{font-weight:600}.legal-details dd{margin:0;color:var(--muted)}
 @media(max-width:760px){.legal-details{grid-template-columns:1fr;gap:5px}.legal-details dd{margin-bottom:15px}.footer-bottom{align-items:flex-start}}
+
+.button:disabled{opacity:.65;cursor:wait;transform:none}.form-status[data-state="success"]{color:#26613e}.form-status[data-state="error"]{color:#992b39}.form-note a{text-decoration:underline;text-underline-offset:3px}

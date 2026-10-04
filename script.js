@@ -27,34 +27,48 @@ const year = document.querySelector("#year");
 if (year) year.textContent = new Date().getFullYear();
 const form = document.querySelector("#contact-form");
 const status = document.querySelector("#form-status");
-const copyButton = document.querySelector("#copy-message");
-if (form) {
-  const prepare = () => {
-    const value = name => form.elements.namedItem(name).value.trim();
-    const type = value("collaboration");
-    const subject = `MBCH MEDIA: ${type}`;
-    const body = ["Hello MBCH Media,", "", value("message"), "", `Name: ${value("name")}`,
-      `Email: ${value("email")}`, `Company / organization: ${value("company") || "Not provided"}`,
-      `Role / profession: ${value("role") || "Not provided"}`, `Collaboration: ${type}`].join("\n");
-    return { subject, body };
-  };
-  form.addEventListener("submit", event => {
+if (form && status) {
+  const submitButton = form.querySelector('button[type="submit"]');
+  let submitting = false;
+  form.addEventListener("submit", async event => {
     event.preventDefault();
-    if (!form.reportValidity()) return;
-    const { subject, body } = prepare();
-    status.textContent = "Send the draft from your email app. If it did not open, copy your message and email contact@mbchmedia.com directly.";
-    window.location.href = `mailto:contact@mbchmedia.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  });
-  copyButton.hidden = false;
-  copyButton.addEventListener("click", async () => {
-    if (!form.reportValidity()) return;
-    const { subject, body } = prepare();
-    const text = `To: contact@mbchmedia.com\nSubject: ${subject}\n\n${body}`;
+    if (submitting || !form.reportValidity()) return;
+    submitting = true;
+    submitButton.disabled = true;
+    submitButton.textContent = "Sending…";
+    form.setAttribute("aria-busy", "true");
+    status.dataset.state = "sending";
+    status.textContent = "Sending your message…";
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
     try {
-      await navigator.clipboard.writeText(text);
-      status.textContent = "Message copied. Paste it into your email app and send it to contact@mbchmedia.com.";
-    } catch {
-      status.textContent = "Copy is unavailable in this browser. Select your message and copy it manually, then email contact@mbchmedia.com.";
+      const payload = Object.fromEntries(new FormData(form));
+      const response = await fetch(form.action, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
+      const result = await response.json();
+      if (!response.ok || result.success !== true) {
+        status.dataset.state = "error";
+        status.textContent = "Your message could not be sent. Your entries have been kept. Please try again later.";
+        return;
+      }
+      form.reset();
+      status.dataset.state = "success";
+      status.textContent = "Thank you. Your message has been submitted successfully. We’ll respond within 2–3 business days.";
+    } catch (error) {
+      status.dataset.state = "error";
+      status.textContent = error.name === "AbortError"
+        ? "We couldn’t confirm whether your message was sent. Your entries have been kept. Please wait before trying again to avoid sending it twice."
+        : "We couldn’t confirm your submission. Your entries have been kept. Check your connection and try again later.";
+    } finally {
+      clearTimeout(timeout);
+      submitting = false;
+      submitButton.disabled = false;
+      submitButton.textContent = "Send message";
+      form.setAttribute("aria-busy", "false");
     }
   });
 }
